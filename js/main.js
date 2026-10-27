@@ -145,30 +145,119 @@ const initHeaderShadow = () => {
 const initSignupForm = () => {
   const signupForm = document.querySelector("#signup-form");
   const formMessage = document.querySelector("#form-message");
+  const nameInput = document.querySelector("#full-name");
+  const emailInput = document.querySelector("#email");
+  const planSelect = document.querySelector("#plan");
+  const termsCheckbox = document.querySelector("#terms");
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
   document.querySelectorAll("[data-plan]").forEach((planLink) => {
     planLink.addEventListener("click", () => {
-      const planSelect = document.querySelector("#plan");
       if (planSelect) planSelect.value = planLink.dataset.plan;
     });
   });
 
-  if (!signupForm || !formMessage) return;
+  if (!signupForm || !formMessage || !nameInput || !emailInput || !planSelect || !termsCheckbox) return;
+
+  const fields = [
+    {
+      input: nameInput,
+      error: document.querySelector("#full-name-error"),
+      validate: () => nameInput.value.trim().length >= 2,
+      message: "Please enter a name with at least 2 characters."
+    },
+    {
+      input: emailInput,
+      error: document.querySelector("#email-error"),
+      validate: () => emailPattern.test(emailInput.value.trim()),
+      message: "Please enter a valid email address."
+    },
+    {
+      input: planSelect,
+      error: document.querySelector("#plan-error"),
+      validate: () => planSelect.value !== "",
+      message: "Please choose a plan or project type."
+    },
+    {
+      input: termsCheckbox,
+      error: document.querySelector("#terms-error"),
+      validate: () => termsCheckbox.checked,
+      message: "Please accept the terms before continuing."
+    }
+  ];
+
+  const validateField = (field) => {
+    const isValid = field.validate();
+    field.input.setAttribute("aria-invalid", String(!isValid));
+    if (field.error) field.error.textContent = isValid ? "" : field.message;
+    return isValid;
+  };
+
+  fields.forEach((field) => {
+    const eventName = field.input === termsCheckbox || field.input === planSelect ? "change" : "input";
+    field.input.addEventListener(eventName, () => {
+      validateField(field);
+      formMessage.textContent = "";
+      formMessage.classList.remove("error");
+    });
+  });
 
   signupForm.addEventListener("submit", (event) => {
     event.preventDefault();
+    formMessage.textContent = "";
     formMessage.classList.remove("error");
 
-    if (!signupForm.reportValidity()) {
-      formMessage.textContent = "Please complete each field and accept the terms to continue.";
-      formMessage.classList.add("error");
+    const isValid = fields.map(validateField).every(Boolean);
+    if (!isValid) {
+      const firstInvalidField = fields.find((field) => !field.validate());
+      firstInvalidField?.input.focus();
       return;
     }
 
     const formData = new FormData(signupForm);
-    const name = formData.get("fullName")?.toString().trim() ?? "";
-    formMessage.textContent = `Thanks, ${name}! Your project note is ready. Please email hello@uniqueprintingpress.com to send it to our studio.`;
+    const name = formData.get("fullName").toString().trim();
+    const email = formData.get("email").toString().trim();
+    const plan = formData.get("plan").toString();
+    let signups;
+
+    try {
+      const savedSignups = localStorage.getItem("signups");
+      signups = savedSignups ? JSON.parse(savedSignups) : [];
+      if (!Array.isArray(signups)) {
+        throw new TypeError('Stored "signups" data must be an array.');
+      }
+    } catch (error) {
+      console.error("Could not read signups from localStorage.", error);
+      formMessage.textContent = "We couldn’t access saved signups. Please check your browser storage settings and try again.";
+      formMessage.classList.add("error");
+      return;
+    }
+
+    const alreadySignedUp = signups.some(
+      (signup) => signup && typeof signup.email === "string" && signup.email.toLowerCase() === email.toLowerCase()
+    );
+    if (alreadySignedUp) {
+      formMessage.textContent = "You've already signed up";
+      formMessage.classList.add("error");
+      return;
+    }
+
+    signups.push({ name, email, plan, createdAt: new Date().toISOString() });
+    try {
+      localStorage.setItem("signups", JSON.stringify(signups));
+    } catch (error) {
+      console.error("Could not save signup to localStorage.", error);
+      formMessage.textContent = "We couldn’t save your signup in this browser. Please check your storage settings and try again.";
+      formMessage.classList.add("error");
+      return;
+    }
+
     signupForm.reset();
+    fields.forEach((field) => {
+      field.input.removeAttribute("aria-invalid");
+      if (field.error) field.error.textContent = "";
+    });
+    formMessage.textContent = `Thanks, ${name}! Your signup has been saved.`;
   });
 };
 

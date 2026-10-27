@@ -230,22 +230,26 @@
             <p>Tell us a little about what you’re making. A real human from our studio will be in touch within one business day.</p>
             <div class="signup-note"><span aria-hidden="true">✳</span> NO PRESSURE. JUST GOOD POSSIBILITIES.</div>
           </div>
-          <form class="signup-form" id="signup-form">
+          <form class="signup-form" id="signup-form" novalidate>
             <h3>Start with the basics.</h3>
             <p>We’ll take it from here.</p>
             <label for="full-name">Full name</label>
-            <input id="full-name" name="fullName" type="text" autocomplete="name" placeholder="How should we say hello?" required>
+            <input id="full-name" name="fullName" type="text" autocomplete="name" placeholder="How should we say hello?" aria-describedby="full-name-error" required>
+            <span class="field-error" id="full-name-error"></span>
             <label for="email">Email address</label>
-            <input id="email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required>
+            <input id="email" name="email" type="email" autocomplete="email" placeholder="you@example.com" aria-describedby="email-error" required>
+            <span class="field-error" id="email-error"></span>
             <label for="plan">What are you interested in?</label>
-            <select id="plan" name="plan" required>
+            <select id="plan" name="plan" aria-describedby="plan-error" required>
               <option value="" selected disabled>Choose a starting point</option>
               <option value="Basic">Basic</option>
               <option value="Pro">Pro</option>
               <option value="Business">Business</option>
               <option value="Custom project">A custom project</option>
             </select>
-            <label class="terms-label"><input type="checkbox" name="terms" required><span>I agree to be contacted about my project and accept the <a href="#footer">privacy policy</a>.</span></label>
+            <span class="field-error" id="plan-error"></span>
+            <label class="terms-label"><input id="terms" type="checkbox" name="terms" aria-describedby="terms-error" required><span>I agree to be contacted about my project and accept the <a href="#footer">privacy policy</a>.</span></label>
+            <span class="field-error terms-error" id="terms-error"></span>
             <button class="button button-blue form-submit" type="submit">Let’s get started <span aria-hidden="true">↗</span></button>
             <p class="form-message" id="form-message" role="status" aria-live="polite"></p>
           </form>
